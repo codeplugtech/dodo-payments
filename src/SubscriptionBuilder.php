@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Redirect;
 class SubscriptionBuilder
 {
 
-
+    protected array $data =[];
     /**
      *
      * @param string $type
