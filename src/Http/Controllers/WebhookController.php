@@ -2,7 +2,7 @@
 
 namespace Codeplugtech\DodoPayments\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use Illuminate\Routing\Controller;
 use App\Models\User;
 use Codeplugtech\DodoPayments\DodoPayments;
 use Codeplugtech\DodoPayments\Events\PaymentSucceeded;

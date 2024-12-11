@@ -5,6 +5,7 @@ namespace Codeplugtech\DodoPayments;
 
 use Codeplugtech\DodoPayments\Console\UpdateCancelledSubscriptions;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Database\Eloquent\Factories\Factory;
 
 class DodoPaymentsServiceProvider extends \Illuminate\Support\ServiceProvider
 {
@@ -26,6 +27,7 @@ class DodoPaymentsServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->bootRoute();
         $this->bootPublishing();
         $this->registerCommands();
+        $this->loadFactories();
     }
 
 
@@ -55,6 +57,15 @@ class DodoPaymentsServiceProvider extends \Illuminate\Support\ServiceProvider
             $this->publishes([
                 __DIR__ . '/../database/migrations' => $this->app->databasePath('migrations'),
             ], 'dodo-migrations');
+        }
+    }
+
+    protected function loadFactories()
+    {
+        if ($this->app->environment('testing')) {
+            Factory::guessFactoryNamesUsing(
+                fn (string $modelName) => 'Database\\Factories\\'.class_basename($modelName).'Factory'
+            );
         }
     }
 

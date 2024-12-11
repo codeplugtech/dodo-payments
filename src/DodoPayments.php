@@ -2,7 +2,6 @@
 
 namespace Codeplugtech\DodoPayments;
 
-use App\Models\User;
 use Codeplugtech\DodoPayments\Exceptions\DodoPaymentsException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Collection;
@@ -22,7 +21,7 @@ class DodoPayments
      * @var callable
      */
     protected static $formatCurrencyUsing;
-    public static $customerModel = User::class;
+    public static $customerModel = 'App\\Models\\User';
 
     /**
      * The transaction model class name.

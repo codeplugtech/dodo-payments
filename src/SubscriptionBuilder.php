@@ -2,13 +2,11 @@
 
 namespace Codeplugtech\DodoPayments;
 
-use App\Models\User;
 use Codeplugtech\DodoPayments\Enum\PaymentStatusEnum;
 use Codeplugtech\DodoPayments\Exceptions\DodoPaymentsException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
-use Livewire\Features\SupportRedirects\Redirector;
 
 /**
  *
@@ -26,7 +24,7 @@ class SubscriptionBuilder
     public function __construct(protected string $type, protected string $productId, protected ?Model $user = null)
     {
 
-        if ($user instanceof User) {
+        if ($user instanceof DodoPayments::$customerModel) {
             $this->setCustomer($this->user->name, $this->user->email);
         }
         $this->setProduct($productId)->setPaymentLink();
@@ -134,7 +132,7 @@ class SubscriptionBuilder
     /**
      * @throws DodoPaymentsException
      */
-    public function create(): RedirectResponse|Redirector
+    public function create()
     {
         $response = DodoPayments::api('post', 'subscriptions', $this->data);
         if ($response->failed()) {

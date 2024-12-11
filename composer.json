@@ -32,8 +32,8 @@
     "require-dev": {
         "mockery/mockery": "^1.5.1",
         "orchestra/testbench": "^8.14|^9.0",
-        "phpstan/phpstan": "^1.10",
-        "phpunit/phpunit": "^10.4"
+        "pestphp/pest": "^3.6",
+        "phpstan/phpstan": "^1.10"
     },
     "suggest": {
         "ext-intl": "Allows for more locales besides the default \"en\" when formatting money values."
@@ -45,7 +45,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Codeplugtech\\DodoPayments\\Tests\\": "tests/",
+            "Database\\Factories\\": "database/factories/"
         }
     },
     "extra": {
@@ -60,7 +61,10 @@
         "prepare": "@php vendor/bin/testbench package:discover --ansi"
     },
     "config": {
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

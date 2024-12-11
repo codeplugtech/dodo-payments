@@ -3,11 +3,13 @@
 namespace Codeplugtech\DodoPayments;
 
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Money\Currency;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 class Transaction extends Model
 {
+    use HasFactory;
     /**
      * The attributes that are not mass assignable.
      *

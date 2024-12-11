@@ -5,12 +5,14 @@ namespace Codeplugtech\DodoPayments;
 use Codeplugtech\DodoPayments\Enum\PaymentStatusEnum;
 use Codeplugtech\DodoPayments\Enum\SubscriptionStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
 class Subscription extends Model
 {
 
+    use HasFactory;
     protected $guarded = [];
 
 
@@ -53,7 +55,7 @@ class Subscription extends Model
      */
     public function active(): bool
     {
-        return $this->status === PaymentStatusEnum::SUCCEEDED->value;
+        return $this->status === SubscriptionStatusEnum::ACTIVE->value;
     }
 
     /**
@@ -61,7 +63,7 @@ class Subscription extends Model
      */
     public function scopeActive(Builder $query): void
     {
-        $query->where('status', PaymentStatusEnum::SUCCEEDED->value);
+        $query->where('status', SubscriptionStatusEnum::ACTIVE->value);
     }
 
     /**
@@ -69,7 +71,7 @@ class Subscription extends Model
      */
     public function cancelled(): bool
     {
-        return $this->status === PaymentStatusEnum::CANCELED->value;
+        return $this->status === SubscriptionStatusEnum::CANCELLED->value;
     }
 
     /**
@@ -77,7 +79,7 @@ class Subscription extends Model
      */
     public function scopeCancelled(Builder $query): void
     {
-        $query->where('status', PaymentStatusEnum::CANCELED->value);
+        $query->where('status', SubscriptionStatusEnum::CANCELLED->value);
     }
 
     /**
@@ -102,7 +104,7 @@ class Subscription extends Model
     {
         $response = DodoPayments::api('PATCH', "subscriptions/{$this->subscription_id}", [
             'data' => [
-                'status' => PaymentStatusEnum::PAUSED->value,
+                'status' => SubscriptionStatusEnum::PAUSED->value,
             ],
         ]);
 
@@ -116,7 +118,7 @@ class Subscription extends Model
      */
     public function scopePaused(Builder $query): void
     {
-        $query->where('status', PaymentStatusEnum::PAUSED->value);
+        $query->where('status', SubscriptionStatusEnum::PAUSED->value);
     }
 
     /**
