@@ -29,7 +29,7 @@ DODO_WEBHOOK_SECRET=YOUR_WEBHOOK_KEY
 ```
 ->withMiddleware(function (Middleware $middleware) {
     $middleware->validateCsrfTokens(except: [
-        'paddle/*',
+        'dodo/*',
     ]);
 })
 ```
