@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class SubscriptionPaused
+class SubscriptionCancelled
 {
     use Dispatchable, SerializesModels;
 

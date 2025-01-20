@@ -86,13 +86,15 @@ class SubscriptionBuilder
     /**
      * @param string $name
      * @param string $email
+     * @param bool $
      * @return $this
      */
-    public function setCustomer(string $name, string $email): self
+    public function setCustomer(string $name, string $email, bool $isNewCustomer = false): self
     {
         $this->data['customer'] = [
             'name' => $name,
             'email' => $email,
+            'create_new_customer'=> $isNewCustomer
         ];
         return $this;
     }

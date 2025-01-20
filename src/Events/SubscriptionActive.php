@@ -11,7 +11,7 @@ class SubscriptionActive
 {
     use Dispatchable, SerializesModels;
 
-    public function __construct(Model $billable, Subscription $subscription, array $payload)
+    public function __construct(public Model $billable,public Subscription $subscription,public array $payload)
     {
 
     }

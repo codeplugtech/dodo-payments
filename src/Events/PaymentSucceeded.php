@@ -12,7 +12,7 @@ class PaymentSucceeded
     use Dispatchable, SerializesModels;
 
 
-    public function __construct(Model $billable,  Transaction $transaction, array $payload)
+    public function __construct(public Model $billable, public Transaction $transaction, public array $payload)
     {
 
     }

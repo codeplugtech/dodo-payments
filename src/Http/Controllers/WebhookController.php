@@ -26,7 +26,7 @@ class WebhookController extends Controller
     public function __construct()
     {
         if (config('dodo.webhook_secret')) {
-             $this->middleware(DodoPaymentsWebhookSignature::class);
+            $this->middleware(DodoPaymentsWebhookSignature::class);
         }
     }
 
@@ -104,8 +104,31 @@ class WebhookController extends Controller
         }
         $subscription->update([
             'status' => $data['status'],
+            'next_billing_at' => Carbon::parse(Carbon::parse($data['next_billing_date'], 'UTC'))
         ]);
         $billable = User::whereEmail($data['customer']['email'])->first();
+
+        SubscriptionActive::dispatch($billable, $subscription, $payload);
+    }
+
+    /**
+     * Handle Subscription Renewed.
+     *
+     * @param array $payload
+     * @return void
+     */
+    protected function handleSubscriptionRenewed(array $payload): void
+    {
+        $data = $payload['data'];
+        if (!$subscription = $this->findSubscription($data['subscription_id'])) {
+            return;
+        }
+        $subscription->update([
+            'status' => $data['status'],
+            'next_billing_at' => Carbon::parse(Carbon::parse($data['next_billing_date'], 'UTC'))
+        ]);
+        $billable = User::whereEmail($data['customer']['email'])->first();
+
         SubscriptionActive::dispatch($billable, $subscription, $payload);
     }
 
@@ -126,7 +149,7 @@ class WebhookController extends Controller
             'status' => $data['status'],
         ]);
         $billable = User::whereEmail($data['customer']['email'])->first();
-        SubscriptionFailed::dispatch($billable,$subscription, $payload);
+        SubscriptionFailed::dispatch($billable, $subscription, $payload);
     }
 
     /**
@@ -145,7 +168,7 @@ class WebhookController extends Controller
             'status' => $data['status'],
         ]);
         $billable = User::whereEmail($data['customer']['email'])->first();
-        SubscriptionOnHold::dispatch($billable,$subscription, $payload);
+        SubscriptionOnHold::dispatch($billable, $subscription, $payload);
     }
 
     /**
@@ -165,7 +188,7 @@ class WebhookController extends Controller
             'paused_at' => Carbon::parse($data['created_at'], 'UTC')
         ]);
         $billable = User::whereEmail($data['customer']['email'])->first();
-        SubscriptionOnHold::dispatch($billable,$subscription, $payload);
+        SubscriptionOnHold::dispatch($billable, $subscription, $payload);
     }
 
     /**
