@@ -12,7 +12,6 @@ it('sets billing information correctly', function () {
 
     $reflection = new ReflectionClass(SubscriptionBuilder::class);
     $property = $reflection->getProperty('data');
-    $property->setAccessible(true);
     $data = $property->getValue($subscriptionBuilder);
 
     expect($data['billing'])->toBe([
@@ -40,12 +39,12 @@ it('sets customer information correctly', function () {
 
     $reflection = new ReflectionClass(SubscriptionBuilder::class);
     $property = $reflection->getProperty('data');
-    $property->setAccessible(true);
     $data = $property->getValue($subscriptionBuilder);
 
     expect($data['customer'])->toBe([
         'name' => 'satz',
-        'email' => 'satz@gmail.com'
+        'email' => 'satz@gmail.com',
+        'create_new_customer'=>false
     ]);
 });
 
