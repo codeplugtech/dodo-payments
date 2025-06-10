@@ -144,5 +144,22 @@ class DodoPayments
         return new Product($response->json());
     }
 
+    /**
+     * @param string $paymentId
+     * @return \Illuminate\Http\Response
+     * @throws Exceptions\DodoPaymentsException
+     */
+    public static function downloadInvoice(string $paymentId): \Illuminate\Http\Response
+    {
+        $response = self::api('GET', "invoices/payments/{$paymentId}");
+        if ($response->successful()) {
+            return \Illuminate\Support\Facades\Response::make($response->body(), 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="invoice-' . $paymentId . '.pdf"',
+            ]);
+        }
+        abort(404, 'Invoice not found or failed to fetch.');
+    }
+
 
 }

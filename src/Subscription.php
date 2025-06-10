@@ -2,7 +2,7 @@
 
 namespace Codeplugtech\DodoPayments;
 
-use Codeplugtech\DodoPayments\Enum\PaymentStatusEnum;
+use Illuminate\Support\Facades\Response;
 use Codeplugtech\DodoPayments\Enum\SubscriptionStatusEnum;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,6 +13,7 @@ class Subscription extends Model
 {
 
     use HasFactory;
+
     protected $guarded = [];
 
 
@@ -88,7 +89,7 @@ class Subscription extends Model
     public function cancel(bool $cancelNow = false): self
     {
         $response = DodoPayments::api('PATCH', "subscriptions/$this->subscription_id", [
-                'status' => SubscriptionStatusEnum::CANCELLED->value,
+            'status' => SubscriptionStatusEnum::CANCELLED->value,
         ]);
         $endsAt = $cancelNow ? $response['created_at'] : $this->next_billing_at;
         $this->forceFill([
@@ -103,9 +104,7 @@ class Subscription extends Model
     public function pause(): self
     {
         $response = DodoPayments::api('PATCH', "subscriptions/{$this->subscription_id}", [
-            'data' => [
-                'status' => SubscriptionStatusEnum::PAUSED->value,
-            ],
+            'status' => SubscriptionStatusEnum::PAUSED->value,
         ]);
 
         $this->sync($response->collect()->toArray());
@@ -153,6 +152,27 @@ class Subscription extends Model
     }
 
     /**
+     * @param string $productId
+     * @param string $type
+     * @return void
+     * @throws Exceptions\DodoPaymentsException
+     */
+    public function swapPlan(string $productId, string $type): void
+    {
+        $response = DodoPayments::api('POST', "subscriptions/{$this->subscription_id}/change-plan", [
+            'product_id' => $productId,
+            'proration_billing_mode' => 'prorated_immediately',
+            'quantity' => 1
+        ],
+        );
+        if ($response->successful()) {
+            $this->update([
+                'product_id' => $productId,
+                'type' => $type,
+            ]);
+        }
+    }
+    /**
      * Determine if the subscription is within its grace period after cancellation.
      *
      * @return bool
@@ -175,7 +195,7 @@ class Subscription extends Model
     /**
      * Filter query by on grace period.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param \Illuminate\Database\Eloquent\Builder $query
      * @return void
      */
     public function scopeOnGracePeriod($query)
@@ -186,7 +206,7 @@ class Subscription extends Model
     /**
      * Filter query by not on grace period.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param \Illuminate\Database\Eloquent\Builder $query
      * @return void
      */
     public function scopeNotOnGracePeriod($query)
@@ -197,7 +217,7 @@ class Subscription extends Model
     /**
      * Filter query by on trial grace period.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param \Illuminate\Database\Eloquent\Builder $query
      * @return void
      */
     public function scopeOnPausedGracePeriod($query)
@@ -208,7 +228,7 @@ class Subscription extends Model
     /**
      * Filter query by not on trial grace period.
      *
-     * @param  \Illuminate\Database\Eloquent\Builder  $query
+     * @param \Illuminate\Database\Eloquent\Builder $query
      * @return void
      */
     public function scopeNotOnPausedGracePeriod($query)

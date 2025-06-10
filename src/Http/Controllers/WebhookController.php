@@ -2,6 +2,10 @@
 
 namespace Codeplugtech\DodoPayments\Http\Controllers;
 
+use Codeplugtech\DodoPayments\Enum\SubscriptionStatusEnum;
+use Codeplugtech\DodoPayments\Events\SubscriptionPlanChanged;
+use Codeplugtech\DodoPayments\Events\SubscriptionRenewed;
+use Codeplugtech\DodoPayments\Subscription;
 use Illuminate\Routing\Controller;
 use App\Models\User;
 use Codeplugtech\DodoPayments\DodoPayments;
@@ -12,6 +16,8 @@ use Codeplugtech\DodoPayments\Events\SubscriptionOnHold;
 use Codeplugtech\DodoPayments\Http\Middleware\VerifyWebhookSignature as DodoPaymentsWebhookSignature;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -82,7 +88,6 @@ class WebhookController extends Controller
         ]);
         $response = DodoPayments::api('get', "subscriptions/$subscription->subscription_id");
         if ($response->successful()) {
-            Log::info('GetSubscription:' . $response->json('next_billing_date'));
             $subscription->update([
                 'next_billing_at' => Carbon::parse($response->json('next_billing_date'), 'UTC')
             ]);
@@ -102,10 +107,6 @@ class WebhookController extends Controller
         if (!$subscription = $this->findSubscription($data['subscription_id'])) {
             return;
         }
-        $subscription->update([
-            'status' => $data['status'],
-            'next_billing_at' => Carbon::parse(Carbon::parse($data['next_billing_date'], 'UTC'))
-        ]);
         $billable = User::whereEmail($data['customer']['email'])->first();
 
         SubscriptionActive::dispatch($billable, $subscription, $payload);
@@ -129,7 +130,7 @@ class WebhookController extends Controller
         ]);
         $billable = User::whereEmail($data['customer']['email'])->first();
 
-        SubscriptionActive::dispatch($billable, $subscription, $payload);
+        SubscriptionRenewed::dispatch($billable, $subscription, $payload);
     }
 
 
@@ -191,15 +192,92 @@ class WebhookController extends Controller
         SubscriptionOnHold::dispatch($billable, $subscription, $payload);
     }
 
+    protected function handleSubscriptionPlanChanged(array $payload): void
+    {
+        $data = $payload['data'];
+        if (!$subscription = $this->findSubscription($data['subscription_id'])) {
+            return;
+        }
+        $subscription->update([
+            'status' => $data['status'],
+            'next_billing_at' => Carbon::parse($data['next_billing_date'], 'UTC'),
+            'product_id' => $data['product_id'],
+        ]);
+        $billable = User::whereEmail($data['customer']['email'])->first();
+        SubscriptionPlanChanged::dispatch($billable, $subscription, $payload);
+    }
+
     /**
      * Find the first subscription matching a Dodo subscription ID.
      *
      * @param string $subscriptionId
-     * @return
+     * @return Subscription
      */
-    protected function findSubscription(string $subscriptionId)
+    protected function findSubscription(string $subscriptionId): Subscription
     {
-        return DodoPayments::$subscriptionModel::firstWhere('subscription_id', $subscriptionId);
+
+        return DB::transaction(function () use ($subscriptionId) {
+            $model = (DodoPayments::$subscriptionModel)::where('subscription_id', $subscriptionId)
+                ->lockForUpdate()
+                ->first();
+
+            Log::info('Model ' . $model);
+            if ($model) {
+                return $model;
+            }
+
+            if (!Config::get('dodo.overlay_checkout')) {
+                throw new \RuntimeException("Overlay checkout is disabled, and subscription {$subscriptionId} not found locally.");
+            }
+            $response = DodoPayments::api('GET', "subscriptions/{$subscriptionId}");
+            if (!$response->successful()) {
+                throw new \RuntimeException("Failed to fetch subscription {$subscriptionId} from Dodo.");
+            }
+
+            $data = $response->collect()->toArray();
+
+            if (is_null($data['metadata']) || is_null($data['metadata']['type'])) {
+                throw new \RuntimeException("There is no type in metadata for subscription {$subscriptionId}");
+            }
+
+            $user = $this->findCustomer($data['customer']['email']);
+
+            $previous = $user->subscriptions()
+                ->where('status', SubscriptionStatusEnum::ACTIVE->value)
+                ->lockForUpdate()
+                ->latest()
+                ->first();
+
+            if ($previous) {
+                $previous->status = SubscriptionStatusEnum::CANCELLED->value;
+                $previous->ends_at = now();
+                $previous->save();
+            }
+
+            $existingSubscription = (DodoPayments::$subscriptionModel)::where('subscription_id', $subscriptionId)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingSubscription) {
+                return $existingSubscription;
+            }
+
+
+
+            return $user->subscriptions()->create([
+                'type' => $data['metadata']['type'],
+                'subscription_id' => $subscriptionId,
+                'product_id' => $data['product_id'],
+                'status' => $data['status'],
+                'next_billing_at' => $data['next_billing_at'] ?? null
+            ]);
+        }, 3);
+
+    }
+
+    protected function findCustomer(string $email): User
+    {
+        return User::whereEmail($email)->firstOrFail();
     }
 
 

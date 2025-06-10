@@ -5,6 +5,7 @@ namespace Codeplugtech\DodoPayments;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Response;
 use Money\Currency;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 class Transaction extends Model
