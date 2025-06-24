@@ -8,4 +8,5 @@ return [
     'webhook_secret' => env('DODO_WEBHOOK_SECRET', ''),
     'path' => env('DODO_PATH', 'dodo'),
     'overlay_checkout' => env('DODO_CHECKOUT', 'true'),
+    'user_model' => App\Models\User::class,
 ];

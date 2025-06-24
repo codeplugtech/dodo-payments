@@ -7,7 +7,6 @@ use Codeplugtech\DodoPayments\Events\SubscriptionPlanChanged;
 use Codeplugtech\DodoPayments\Events\SubscriptionRenewed;
 use Codeplugtech\DodoPayments\Subscription;
 use Illuminate\Routing\Controller;
-use App\Models\User;
 use Codeplugtech\DodoPayments\DodoPayments;
 use Codeplugtech\DodoPayments\Events\PaymentSucceeded;
 use Codeplugtech\DodoPayments\Events\SubscriptionActive;
@@ -75,7 +74,7 @@ class WebhookController extends Controller
         if (!$subscription = $this->findSubscription($data['subscription_id'])) {
             return;
         }
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
 
         $transaction = $billable->transactions()->create([
             'payment_id' => $data['payment_id'],
@@ -107,7 +106,7 @@ class WebhookController extends Controller
         if (!$subscription = $this->findSubscription($data['subscription_id'])) {
             return;
         }
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
 
         SubscriptionActive::dispatch($billable, $subscription, $payload);
     }
@@ -128,7 +127,7 @@ class WebhookController extends Controller
             'status' => $data['status'],
             'next_billing_at' => Carbon::parse(Carbon::parse($data['next_billing_date'], 'UTC'))
         ]);
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
 
         SubscriptionRenewed::dispatch($billable, $subscription, $payload);
     }
@@ -149,7 +148,7 @@ class WebhookController extends Controller
         $subscription->update([
             'status' => $data['status'],
         ]);
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
         SubscriptionFailed::dispatch($billable, $subscription, $payload);
     }
 
@@ -168,7 +167,7 @@ class WebhookController extends Controller
         $subscription->update([
             'status' => $data['status'],
         ]);
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
         SubscriptionOnHold::dispatch($billable, $subscription, $payload);
     }
 
@@ -188,7 +187,7 @@ class WebhookController extends Controller
             'status' => $data['status'],
             'paused_at' => Carbon::parse($data['created_at'], 'UTC')
         ]);
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
         SubscriptionOnHold::dispatch($billable, $subscription, $payload);
     }
 
@@ -203,7 +202,7 @@ class WebhookController extends Controller
             'next_billing_at' => Carbon::parse($data['next_billing_date'], 'UTC'),
             'product_id' => $data['product_id'],
         ]);
-        $billable = User::whereEmail($data['customer']['email'])->first();
+        $billable = $this->findCustomer($data['customer']['email']);
         SubscriptionPlanChanged::dispatch($billable, $subscription, $payload);
     }
 
@@ -275,9 +274,10 @@ class WebhookController extends Controller
 
     }
 
-    protected function findCustomer(string $email): User
+    protected function findCustomer(string $email):mixed
     {
-        return User::whereEmail($email)->firstOrFail();
+        $userModel = config('dodo.user_model');
+        return (new $userModel)->whereEmail($email)->firstOrFail();
     }
 
 

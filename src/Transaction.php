@@ -5,7 +5,6 @@ namespace Codeplugtech\DodoPayments;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Response;
 use Money\Currency;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 class Transaction extends Model
@@ -38,6 +37,17 @@ class Transaction extends Model
     }
 
     /**
+     * @return mixed
+     */
+    public function user()
+    {
+        $model = DodoPayments::$customerModel;
+
+        return $this->belongsTo($model, 'user_id');
+    }
+
+
+    /**
      * Get the total amount that was paid.
      *
      * @return string
@@ -47,6 +57,9 @@ class Transaction extends Model
         return DodoPayments::formatAmount($this->total, $this->currency());
     }
 
+    /**
+     * @return Attribute
+     */
     protected function formatTotal(): Attribute
     {
         return Attribute::make(

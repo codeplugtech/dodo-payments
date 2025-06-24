@@ -16,9 +16,10 @@ class SubscriptionFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'name' => $this->faker->word,
+            'type' => $this->faker->word,
+            'product_id' => $this->faker->uuid(),
             'status' => $this->faker->randomElement(['active', 'cancelled', 'expired']),
-            'expires_at' => $this->faker->dateTimeBetween('now', '+1 year'),
+            'ends_at' => $this->faker->dateTimeBetween('now', '+1 year'),
         ];
     }
 }
