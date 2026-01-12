@@ -140,7 +140,7 @@ class DodoPayments
      */
     public static function productPrice(string $id): Product
     {
-        $response = static::api('get', "products/$id",);
+        $response = static::api('get', "products/$id");
         return new Product($response->json());
     }
 
@@ -159,6 +159,32 @@ class DodoPayments
             ]);
         }
         abort(404, 'Invoice not found or failed to fetch.');
+    }
+
+    /**
+     * Create a checkout session
+     *
+     * @param array $data Checkout session data
+     * @return array{session_id: string, checkout_url: string|null}
+     * @throws DodoPaymentsException
+     */
+    public static function createCheckoutSession(array $data): array
+    {
+        $response = static::api('post', 'checkouts', $data);
+        return $response->json();
+    }
+
+    /**
+     * Get checkout session details
+     *
+     * @param string $sessionId
+     * @return array
+     * @throws DodoPaymentsException
+     */
+    public static function getCheckoutSession(string $sessionId): array
+    {
+        $response = static::api('get', "checkouts/$sessionId");
+        return $response->json();
     }
 
 
