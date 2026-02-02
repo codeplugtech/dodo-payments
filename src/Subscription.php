@@ -88,14 +88,44 @@ class Subscription extends Model
      */
     public function cancel(bool $cancelNow = false): self
     {
-        $response = DodoPayments::api('PATCH', "subscriptions/$this->subscription_id", [
-            'status' => SubscriptionStatusEnum::CANCELLED->value,
-        ]);
+        $payload = $cancelNow
+            ? ['status' => SubscriptionStatusEnum::CANCELLED->value]
+            : ['cancel_at_next_billing_date' => true];
+
+        $response = DodoPayments::api(
+            'PATCH',
+            "subscriptions/{$this->subscription_id}",
+            $payload
+        );
         $endsAt = $cancelNow ? $response['created_at'] : $this->next_billing_at;
         $this->forceFill([
             'ends_at' => Carbon::parse($endsAt, 'UTC')
         ])->save();
         return $this;
+    }
+
+    public function updatePaymentMethod(
+        string  $type = 'new',     // 'new' or 'existing'
+        ?string $returnUrl = null
+    ): array
+    {
+        $payload = array_filter([
+            'type' => $type,
+            'return_url' => $returnUrl,
+        ]);
+
+        $response = DodoPayments::api(
+            'POST',
+            "subscriptions/{$this->subscription_id}/update-payment-method",
+            $payload
+        );
+
+        return [
+            'payment_id' => $response['payment_id'] ?? null,
+            'payment_link' => $response['payment_link'] ?? null,
+            'client_secret' => $response['client_secret'] ?? null,
+            'expires_on' => $response['expires_on'] ?? null,
+        ];
     }
 
     /**
@@ -172,6 +202,8 @@ class Subscription extends Model
             ]);
         }
     }
+
+
     /**
      * Determine if the subscription is within its grace period after cancellation.
      *

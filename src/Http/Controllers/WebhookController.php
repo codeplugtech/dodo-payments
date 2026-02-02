@@ -91,7 +91,7 @@ class WebhookController extends Controller
                 'next_billing_at' => Carbon::parse($response->json('next_billing_date'), 'UTC')
             ]);
         }
-        PaymentSucceeded::dispatch($billable, $transaction, $payload);
+        PaymentSucceeded::dispatch($billable, $transaction,$subscription, $payload);
     }
 
     /**
