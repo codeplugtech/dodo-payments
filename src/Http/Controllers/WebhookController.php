@@ -76,15 +76,20 @@ class WebhookController extends Controller
         }
         $billable = $this->findCustomer($data['customer']['email']);
 
-        $transaction = $billable->transactions()->create([
-            'payment_id' => $data['payment_id'],
-            'subscription_id' => $data['subscription_id'],
-            'status' => $data['status'],
-            'total' => $data['total_amount'],
-            'tax' => $data['tax'] ?? 0,
-            'currency' => $data['currency'],
-            'billed_at' => Carbon::parse($data['created_at'], 'UTC'),
-        ]);
+        $transaction = $billable->transactions()->updateOrCreate(
+            [
+                'payment_id' => $data['payment_id'],
+            ],
+            [
+                'subscription_id' => $data['subscription_id'],
+                'status'          => $data['status'],
+                'total'           => $data['total_amount'],
+                'tax'             => $data['tax'] ?? 0,
+                'currency'        => $data['currency'],
+                'billed_at'       => Carbon::parse($data['created_at'], 'UTC'),
+            ]
+        );
+
         $response = DodoPayments::api('get', "subscriptions/$subscription->subscription_id");
         if ($response->successful()) {
             $subscription->update([
