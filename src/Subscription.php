@@ -187,11 +187,11 @@ class Subscription extends Model
      * @return void
      * @throws Exceptions\DodoPaymentsException
      */
-    public function swapPlan(string $productId, string $type): void
+    public function swapPlan(string $productId, string $type,string $billingMode='prorated_immediately'): void
     {
         $response = DodoPayments::api('POST', "subscriptions/{$this->subscription_id}/change-plan", [
             'product_id' => $productId,
-            'proration_billing_mode' => 'prorated_immediately',
+            'proration_billing_mode' => $billingMode,
             'quantity' => 1
         ],
         );
