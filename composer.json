@@ -1,5 +1,5 @@
 {
-  "name": "tapan288/dodo-payments",
+  "name": "codeplugtech/dodo-payments",
   "description": "Laravel Package for Dodo Payments",
   "keywords": [
     "laravel",
@@ -12,10 +12,6 @@
     {
       "name": "Sathish Kumar",
       "email": "satz@codeplugtech.in"
-    },
-    {
-      "name": "Tapan Sharma",
-      "email": "tapansharma69@gmail.com"
     }
   ],
   "require": {
